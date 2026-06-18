@@ -1,18 +1,14 @@
-import { createClient } from '@supabase/supabase-js'
+import { getSupabase, AGENCY_ID } from '../../lib/supabase'
 import AppShell from "../components/AppShell";
 import AddCandidateButton from "../components/AddCandidateButton";
 import { MapPin, ShieldCheck, ShieldAlert, Car } from "lucide-react";
 
 async function getCandidates() {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { db: { schema: 'staffflow' } }
-  )
+  const supabase = getSupabase()
   const { data } = await supabase
     .from('candidates')
     .select('*')
-    .eq('agency_id', '00000000-0000-0000-0000-000000000001')
+    .eq('agency_id', AGENCY_ID)
     .order('created_at', { ascending: false })
   return data || []
 }

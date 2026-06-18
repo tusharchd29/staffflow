@@ -1,14 +1,10 @@
-import { createClient } from '@supabase/supabase-js'
+import { getSupabase, AGENCY_ID } from '../lib/supabase'
 import AppShell from "./components/AppShell";
 import { Users, Briefcase, CalendarCheck, ShieldCheck, TrendingUp, AlertCircle, CheckCircle2, ArrowUpRight } from "lucide-react";
 
 async function getData() {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { db: { schema: 'staffflow' } }
-  )
-  const AGENCY = '00000000-0000-0000-0000-000000000001'
+  const supabase = getSupabase()
+  const AGENCY = AGENCY_ID
 
   const [{ data: candidates }, { data: jobs }, { data: timesheets }, { data: placements }] = await Promise.all([
     supabase.from('candidates').select('*').eq('agency_id', AGENCY),

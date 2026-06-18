@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import { getSupabase } from '../../lib/supabase'
 import { Plus, X } from 'lucide-react'
 
 const AGENCY_ID = '00000000-0000-0000-0000-000000000001'
@@ -20,11 +21,7 @@ export default function AddCandidateButton() {
   const save = async () => {
     if (!form.full_name || !form.role) return
     setSaving(true)
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { db: { schema: 'staffflow' } }
-    )
+    const supabase = getSupabase()
     await supabase.from('candidates').insert({
       agency_id: AGENCY_ID,
       full_name: form.full_name,

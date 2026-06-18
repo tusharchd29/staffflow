@@ -1,18 +1,14 @@
-import { createClient } from '@supabase/supabase-js'
+import { getSupabase, AGENCY_ID } from '../../lib/supabase'
 import AppShell from "../components/AppShell";
 import TimesheetActions from "../components/TimesheetActions";
 import { Download, AlertTriangle } from "lucide-react";
 
 async function getTimesheets() {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { db: { schema: 'staffflow' } }
-  )
+  const supabase = getSupabase()
   const { data } = await supabase
     .from('timesheets')
     .select('*, candidates(full_name, role), clients(company_name)')
-    .eq('agency_id', '00000000-0000-0000-0000-000000000001')
+    .eq('agency_id', AGENCY_ID)
     .order('submitted_at', { ascending: false })
   return data || []
 }

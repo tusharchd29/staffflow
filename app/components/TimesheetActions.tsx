@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { createClient } from '@supabase/supabase-js'
+import { getSupabase } from '../../lib/supabase'
 
 export default function TimesheetActions({ id }: { id: string }) {
   const [loading, setLoading] = useState<string | null>(null)
@@ -9,11 +10,7 @@ export default function TimesheetActions({ id }: { id: string }) {
 
   const update = async (status: string, note?: string) => {
     setLoading(status)
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { db: { schema: 'staffflow' } }
-    )
+    const supabase = getSupabase()
     await supabase.from('timesheets').update({
       status,
       reviewed_at: new Date().toISOString(),
