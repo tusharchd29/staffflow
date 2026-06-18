@@ -1,7 +1,8 @@
 import { getSupabase, AGENCY_ID } from '../../lib/supabase'
 import AppShell from "../components/AppShell";
 import TimesheetActions from "../components/TimesheetActions";
-import { Download, AlertTriangle } from "lucide-react";
+import InvoiceButton from "../components/InvoiceButton";
+import { AlertTriangle } from "lucide-react";
 
 async function getTimesheets() {
   const supabase = getSupabase()
@@ -26,16 +27,16 @@ export default async function TimesheetsPage() {
   const timesheets = await getTimesheets()
   const approved = timesheets.filter((t: any) => t.status === 'Approved')
   const pending = timesheets.filter((t: any) => t.status === 'Pending')
+  const rejected = timesheets.filter((t: any) => t.status === 'Rejected')
   const totalBillable = approved.reduce((a: number, t: any) => a + calcAmount(t.regular_hours, t.overtime_hours, t.hourly_rate), 0)
 
   return (
     <AppShell>
-      {/* Summary */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24 }}>
         {[
           { label: 'Pending Approval', value: pending.length, color: 'var(--amber)', note: 'Action required' },
           { label: 'Approved', value: approved.length, color: 'var(--sage)', note: 'This period' },
-          { label: 'Rejected', value: timesheets.filter((t:any) => t.status === 'Rejected').length, color: 'var(--clay)', note: 'Needs resubmission' },
+          { label: 'Rejected', value: rejected.length, color: 'var(--clay)', note: 'Needs resubmission' },
           { label: 'Billable (excl. HST)', value: `$${(totalBillable/1000).toFixed(1)}k`, color: 'var(--espresso)', note: `+$${(totalBillable*HST/1000).toFixed(1)}k HST` },
         ].map(s => (
           <div key={s.label} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 12, padding: '18px 22px' }}>
@@ -104,7 +105,6 @@ export default async function TimesheetsPage() {
         </div>
       )}
 
-      {/* Billing box */}
       {approved.length > 0 && (
         <div style={{ marginTop: 20, padding: '18px 24px', borderRadius: 10, background: 'var(--amber-pale)', border: '1px solid #F0D5A0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
@@ -119,9 +119,7 @@ export default async function TimesheetsPage() {
             <div style={{ fontFamily: "'Playfair Display', serif", fontSize: 24, fontWeight: 700, color: 'var(--amber)' }}>
               ${(totalBillable*(1+HST)).toLocaleString(undefined, {maximumFractionDigits:0})}
             </div>
-            <button style={{ marginTop: 6, padding: '7px 16px', fontSize: 12, fontWeight: 600, background: 'var(--amber)', color: 'white', border: 'none', borderRadius: 7, cursor: 'pointer' }}>
-              Generate Invoice
-            </button>
+            <InvoiceButton timesheets={approved} totalBillable={totalBillable} hst={totalBillable * HST} />
           </div>
         </div>
       )}

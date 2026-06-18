@@ -1,54 +1,35 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { getSupabase, AGENCY_ID } from '../../lib/supabase'
 import { Plus, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-
-const CLIENTS = [
-  { id: '', name: 'Select client...' },
-  { id: 'truckpro', name: 'TruckPro Logistics' },
-  { id: 'buildcore', name: 'BuildCore Inc.' },
-  { id: 'maple', name: 'Maple Warehousing' },
-  { id: 'fastfreight', name: 'FastFreight GTA' },
-  { id: 'steeltech', name: 'SteelTech Mfg.' },
-]
 
 export default function AddJobButton() {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [clients, setClients] = useState<any[]>([])
   const [form, setForm] = useState({
     title: '', job_type: '', city: '', openings: '1',
     rate_min: '', rate_max: '', status: 'Active',
-    description: '', requirements: '', client_id: '',
-    deadline: '',
+    description: '', requirements: '', client_id: '', deadline: '',
   })
+
+  useEffect(() => {
+    if (open && clients.length === 0) {
+      getSupabase().from('clients').select('id,company_name').eq('agency_id', AGENCY_ID).order('company_name')
+        .then(({ data }) => setClients(data || []))
+    }
+  }, [open])
 
   const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }))
 
   const save = async () => {
     if (!form.title || !form.job_type || !form.city) return
     setSaving(true)
-    const supabase = getSupabase()
-
-    // Look up client_id from clients table by name if needed
-    let clientId = form.client_id || null
-    if (form.client_id && form.client_id.length < 20) {
-      // It's a name slug, fetch the real UUID
-      const { data: clientData } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('agency_id', AGENCY_ID)
-        .ilike('company_name', `%${CLIENTS.find(c => c.id === form.client_id)?.name || form.client_id}%`)
-        .limit(1)
-        .single()
-      clientId = clientData?.id || null
-    }
-
-    // If no match, just store null — job still appears, just without client link
-    await supabase.from('jobs').insert({
+    await getSupabase().from('jobs').insert({
       agency_id: AGENCY_ID,
-      client_id: clientId,
+      client_id: form.client_id || null,
       title: form.title,
       job_type: form.job_type,
       city: form.city,
@@ -64,24 +45,18 @@ export default function AddJobButton() {
     })
     setSaving(false)
     setOpen(false)
+    setForm({ title: '', job_type: '', city: '', openings: '1', rate_min: '', rate_max: '', status: 'Active', description: '', requirements: '', client_id: '', deadline: '' })
     router.refresh()
   }
 
-  const inputStyle = {
-    width: '100%', background: 'var(--sand)', border: '1px solid var(--border)',
-    borderRadius: 8, padding: '9px 12px', fontSize: 13, color: 'var(--espresso)',
-    outline: 'none', boxSizing: 'border-box' as const
-  }
+  const inputStyle = { width: '100%', background: 'var(--sand)', border: '1px solid var(--border)', borderRadius: 8, padding: '9px 12px', fontSize: 13, color: 'var(--espresso)', outline: 'none', boxSizing: 'border-box' as const }
   const labelStyle = { fontSize: 12, fontWeight: 500 as const, color: 'var(--text-secondary)', display: 'block' as const, marginBottom: 5 }
 
   return (
     <>
-      <button onClick={() => setOpen(true)} style={{
-        display: 'flex', alignItems: 'center', gap: 7,
-        background: 'var(--amber)', color: 'white', border: 'none',
-        borderRadius: 8, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer',
-        alignSelf: 'center', whiteSpace: 'nowrap' as const
-      }}><Plus size={15} /> New Order</button>
+      <button onClick={() => setOpen(true)} style={{ display: 'flex', alignItems: 'center', gap: 7, background: 'var(--amber)', color: 'white', border: 'none', borderRadius: 8, padding: '10px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer', alignSelf: 'center', whiteSpace: 'nowrap' as const }}>
+        <Plus size={15} /> New Order
+      </button>
 
       {open && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
@@ -100,24 +75,20 @@ export default function AddJobButton() {
                 <label style={labelStyle}>Type *</label>
                 <select style={inputStyle} value={form.job_type} onChange={e => set('job_type', e.target.value)}>
                   <option value="">Select type...</option>
-                  <option>Transport</option>
-                  <option>General Labour</option>
-                  <option>Industrial</option>
-                  <option>Professional</option>
+                  <option>Transport</option><option>General Labour</option><option>Industrial</option><option>Professional</option>
                 </select>
               </div>
               <div>
                 <label style={labelStyle}>Status</label>
                 <select style={inputStyle} value={form.status} onChange={e => set('status', e.target.value)}>
-                  <option>Active</option>
-                  <option>Urgent</option>
-                  <option>Filled</option>
+                  <option>Active</option><option>Urgent</option><option>Filled</option>
                 </select>
               </div>
               <div>
                 <label style={labelStyle}>Client</label>
                 <select style={inputStyle} value={form.client_id} onChange={e => set('client_id', e.target.value)}>
-                  {CLIENTS.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  <option value="">Select client...</option>
+                  {clients.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
                 </select>
               </div>
               <div>
@@ -129,7 +100,7 @@ export default function AddJobButton() {
                 <input style={inputStyle} type="number" min="1" value={form.openings} onChange={e => set('openings', e.target.value)} />
               </div>
               <div>
-                <label style={labelStyle}>Fill Deadline</label>
+                <label style={labelStyle}>Deadline</label>
                 <input style={inputStyle} type="date" value={form.deadline} onChange={e => set('deadline', e.target.value)} />
               </div>
               <div>
@@ -141,26 +112,17 @@ export default function AddJobButton() {
                 <input style={inputStyle} type="number" value={form.rate_max} onChange={e => set('rate_max', e.target.value)} placeholder="26" />
               </div>
             </div>
-
             <div style={{ marginBottom: 14 }}>
               <label style={labelStyle}>Requirements (comma separated)</label>
               <input style={inputStyle} value={form.requirements} onChange={e => set('requirements', e.target.value)} placeholder="Class AZ, CVOS Clean, 2+ yrs exp" />
             </div>
-
             <div style={{ marginBottom: 20 }}>
               <label style={labelStyle}>Description</label>
               <textarea style={{ ...inputStyle, minHeight: 72, resize: 'vertical' as const }} value={form.description} onChange={e => set('description', e.target.value)} placeholder="Role details, shift info, start date..." />
             </div>
-
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setOpen(false)} style={{ flex: 1, padding: '11px 0', fontSize: 14, background: 'var(--sand)', border: '1px solid var(--border)', borderRadius: 9, cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                Cancel
-              </button>
-              <button onClick={save} disabled={saving || !form.title || !form.job_type || !form.city} style={{
-                flex: 2, padding: '11px 0', fontSize: 14, fontWeight: 600,
-                background: saving ? 'var(--text-muted)' : 'var(--espresso)',
-                color: 'white', border: 'none', borderRadius: 9, cursor: saving ? 'not-allowed' : 'pointer'
-              }}>
+              <button onClick={() => setOpen(false)} style={{ flex: 1, padding: '11px 0', fontSize: 14, background: 'var(--sand)', border: '1px solid var(--border)', borderRadius: 9, cursor: 'pointer', color: 'var(--text-secondary)' }}>Cancel</button>
+              <button onClick={save} disabled={saving || !form.title || !form.job_type || !form.city} style={{ flex: 2, padding: '11px 0', fontSize: 14, fontWeight: 600, background: saving ? 'var(--text-muted)' : 'var(--espresso)', color: 'white', border: 'none', borderRadius: 9, cursor: saving ? 'not-allowed' : 'pointer' }}>
                 {saving ? 'Saving...' : 'Create Job Order'}
               </button>
             </div>

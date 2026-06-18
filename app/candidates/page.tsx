@@ -2,6 +2,7 @@ import { getSupabase, AGENCY_ID } from '../../lib/supabase'
 import AppShell from "../components/AppShell";
 import AddCandidateButton from "../components/AddCandidateButton";
 import CandidateGrid from "../components/CandidateGrid";
+import { Suspense } from 'react';
 
 async function getCandidates() {
   const supabase = getSupabase()
@@ -22,7 +23,9 @@ export default async function CandidatesPage() {
         <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>{candidates.length} workers in system</div>
         <AddCandidateButton />
       </div>
-      <CandidateGrid candidates={candidates} />
+      <Suspense fallback={<div style={{ padding: 20, color: 'var(--text-muted)' }}>Loading...</div>}>
+        <CandidateGrid candidates={candidates} />
+      </Suspense>
     </AppShell>
   )
 }

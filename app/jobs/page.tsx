@@ -1,7 +1,8 @@
 import { getSupabase, AGENCY_ID } from '../../lib/supabase'
 import AppShell from "../components/AppShell";
 import AddJobButton from "../components/AddJobButton";
-import { MapPin, Users, Calendar, DollarSign, AlertTriangle, CheckCircle, Clock, Car, ShieldCheck, Plus } from "lucide-react";
+import JobActions from "../components/JobActions";
+import { MapPin, Users, Calendar, DollarSign, AlertTriangle, CheckCircle, Clock, ShieldCheck } from "lucide-react";
 
 async function getJobs() {
   const supabase = getSupabase()
@@ -83,10 +84,9 @@ export default async function JobsPage() {
                         {String(job.id).slice(0, 8).toUpperCase()}
                       </span>
                       <span style={{ ...tc, fontSize: 11, fontWeight: 600, padding: "2px 9px", borderRadius: 20 }}>{job.job_type}</span>
-                      <span style={{
-                        display: "inline-flex", alignItems: "center", gap: 4,
-                        background: sc.bg, color: sc.color, fontSize: 11, fontWeight: 600, padding: "2px 9px", borderRadius: 20
-                      }}><StatusIcon size={10} /> {job.status}</span>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: sc.bg, color: sc.color, fontSize: 11, fontWeight: 600, padding: "2px 9px", borderRadius: 20 }}>
+                        <StatusIcon size={10} /> {job.status}
+                      </span>
                       {job.status === "Urgent" && <span style={{ fontSize: 11, color: "var(--clay)" }}>⚡ Fill by {job.deadline}</span>}
                     </div>
                     <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 17, fontWeight: 600, color: "var(--espresso)", marginBottom: 4 }}>{job.title}</h3>
@@ -98,22 +98,20 @@ export default async function JobsPage() {
                     {reqs.length > 0 && (
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
                         {reqs.map((r: string) => {
-                          const isCompliance = r.includes("CVOS") || r.includes("WHMIS") || r.includes("Background") || r.includes("Class A");
+                          const isC = r.includes("CVOS") || r.includes("WHMIS") || r.includes("Background") || r.includes("Class A");
                           return (
                             <span key={r} style={{
-                              background: isCompliance ? "#FFF3E0" : "var(--sand)",
-                              color: isCompliance ? "var(--amber)" : "var(--text-secondary)",
+                              background: isC ? "#FFF3E0" : "var(--sand)", color: isC ? "var(--amber)" : "var(--text-secondary)",
                               fontSize: 11, padding: "3px 9px", borderRadius: 20,
-                              border: isCompliance ? "1px solid #F0C060" : "1px solid var(--border)",
+                              border: isC ? "1px solid #F0C060" : "1px solid var(--border)",
                               display: "inline-flex", alignItems: "center", gap: 3
                             }}>
-                              {isCompliance && <ShieldCheck size={9} />}{r}
+                              {isC && <ShieldCheck size={9} />}{r}
                             </span>
                           );
                         })}
                       </div>
                     )}
-
                     {(needsCVOS || needsWHMIS) && (
                       <div style={{ marginTop: 10, fontSize: 11, color: "#5A7A9A", display: "flex", gap: 10 }}>
                         {needsCVOS && <span>🔵 CVOS abstract required</span>}
@@ -143,12 +141,7 @@ export default async function JobsPage() {
                         <div style={{ height: "100%", borderRadius: 6, background: fillPct === 100 ? "var(--sage)" : fillPct > 0 ? "var(--amber)" : "var(--clay)", width: `${fillPct}%` }} />
                       </div>
                     </div>
-                    <div style={{ display: "flex", gap: 7, marginTop: 4 }}>
-                      <button style={{ flex: 1, padding: "7px 0", fontSize: 12, background: "var(--sand)", border: "1px solid var(--border)", borderRadius: 7, cursor: "pointer", color: "var(--text-secondary)" }}>View</button>
-                      {job.status !== "Filled" && (
-                        <a href={`/candidates?role=${encodeURIComponent(job.job_type)}`} style={{ flex: 1, padding: "7px 0", fontSize: 12, fontWeight: 600, background: "var(--amber)", border: "none", borderRadius: 7, cursor: "pointer", color: "white", textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center" }}>Match Workers</a>
-                      )}
-                    </div>
+                    <JobActions jobId={job.id} jobType={job.job_type} status={job.status} />
                   </div>
                 </div>
               </div>
