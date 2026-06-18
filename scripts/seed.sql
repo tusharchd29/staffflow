@@ -251,7 +251,7 @@ UNION ALL SELECT '00000000-0000-0000-0000-000000000001'::uuid, id, 'Quality Cont
 UNION ALL SELECT '00000000-0000-0000-0000-000000000001'::uuid, id, 'Inventory Control Analyst','General Labour','Mississauga, ON',1,1,21,24,'Filled',ARRAY['Inventory systems','Excel','Background check'],'Cycle counts, discrepancy resolution.',CURRENT_DATE+20,NOW()-INTERVAL '16 days' FROM staffflow.clients WHERE agency_id='00000000-0000-0000-0000-000000000001'::uuid AND company_name='Maple Warehousing'
 UNION ALL SELECT '00000000-0000-0000-0000-000000000001'::uuid, id, 'Industrial Cleaner','General Labour','Scarborough, ON',3,3,17,19,'Filled',ARRAY['WHMIS','Background check','Evening availability'],'Commercial cleaning for industrial facilities.',CURRENT_DATE+21,NOW()-INTERVAL '17 days' FROM staffflow.clients WHERE agency_id='00000000-0000-0000-0000-000000000001'::uuid AND company_name='BuildCore Inc.';
 
--- Placements for Placed candidates (CTE approach — no window functions in OFFSET)
+-- Placements for Placed candidates
 INSERT INTO staffflow.placements (agency_id, candidate_id, client_id, job_id, status, start_date, end_date, hourly_rate)
 WITH placed AS (
   SELECT id, agency_id, ROW_NUMBER() OVER (ORDER BY id) AS rn
@@ -279,9 +279,9 @@ SELECT
   cl.id,
   j.id,
   'Active',
-  CURRENT_DATE - (10 + p.rn * 3),
-  CURRENT_DATE + (30 + p.rn * 5),
-  22 + (p.rn % 10)
+  CURRENT_DATE - (10 + p.rn::int * 3)::int,
+  CURRENT_DATE + (30 + p.rn::int * 5)::int,
+  (22 + (p.rn::int % 10))::numeric
 FROM placed p
 CROSS JOIN counts co
 JOIN clients_n cl ON cl.rn = ((p.rn - 1) % co.c_cnt) + 1
@@ -298,10 +298,10 @@ SELECT
   agency_id, candidate_id, id, client_id,
   DATE_TRUNC('week', NOW() - INTERVAL '7 days')::date,
   DATE_TRUNC('week', NOW() - INTERVAL '7 days')::date + 4,
-  40 + (rn % 5),
-  CASE WHEN rn % 4 = 0 THEN 4 ELSE 0 END,
+  (40 + (rn::int % 5))::numeric,
+  CASE WHEN rn::int % 4 = 0 THEN 4 ELSE 0 END,
   hourly_rate,
-  CASE rn % 3 WHEN 0 THEN 'Approved' WHEN 1 THEN 'Pending' ELSE 'Approved' END,
+  CASE rn::int % 3 WHEN 0 THEN 'Approved' WHEN 1 THEN 'Pending' ELSE 'Approved' END,
   NOW() - INTERVAL '2 days'
 FROM numbered;
 
@@ -316,14 +316,14 @@ SELECT
   agency_id, candidate_id, id, client_id,
   DATE_TRUNC('week', NOW() - INTERVAL '14 days')::date,
   DATE_TRUNC('week', NOW() - INTERVAL '14 days')::date + 4,
-  38 + (rn % 7),
-  CASE WHEN rn % 5 = 0 THEN 6 ELSE 0 END,
+  (38 + (rn::int % 7))::numeric,
+  CASE WHEN rn::int % 5 = 0 THEN 6 ELSE 0 END,
   hourly_rate,
   'Approved',
   NOW() - INTERVAL '9 days'
 FROM numbered;
 
--- Final count check
+-- Final count
 SELECT
   (SELECT COUNT(*) FROM staffflow.clients    WHERE agency_id = '00000000-0000-0000-0000-000000000001'::uuid) AS clients,
   (SELECT COUNT(*) FROM staffflow.candidates WHERE agency_id = '00000000-0000-0000-0000-000000000001'::uuid) AS candidates,
