@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { getSupabase, AGENCY_ID } from '../../lib/supabase'
 import AppShell from "../components/AppShell";
 import TimesheetActions from "../components/TimesheetActions";

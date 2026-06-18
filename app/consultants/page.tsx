@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { getSupabase, AGENCY_ID } from '../../lib/supabase'
 import AppShell from "../components/AppShell";
 import { MapPin, Phone, Star, CheckCircle, Clock, AlertCircle, Car, ShieldCheck, ShieldAlert } from "lucide-react";
