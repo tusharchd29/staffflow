@@ -4,10 +4,11 @@ import { usePathname } from "next/navigation";
 
 const titles: Record<string, { title: string; sub: string }> = {
   "/": { title: "Operations Dashboard", sub: "Overview of all active staffing operations" },
-  "/candidates": { title: "Candidate Pipeline", sub: "Track candidates from application to placement" },
-  "/jobs": { title: "Job Orders", sub: "Active mandates and client requirements" },
-  "/consultants": { title: "Consultant Board", sub: "Availability and deployment status" },
-  "/timesheets": { title: "Timesheets", sub: "Hours logged and approval status" },
+  "/candidates": { title: "Candidate Pipeline", sub: "Track workers from application to placement" },
+  "/jobs": { title: "Job Orders", sub: "Active mandates — drivers, general labour, industrial" },
+  "/consultants": { title: "Worker Board", sub: "Availability and deployment status" },
+  "/timesheets": { title: "Timesheets", sub: "Hours logged, OT tracking, and billing" },
+  "/intake": { title: "Client Intake", sub: "New client consultation and active account management" },
 };
 
 export default function Header() {

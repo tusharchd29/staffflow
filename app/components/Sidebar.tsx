@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Users, Briefcase, CalendarCheck, Clock,
-  ChevronRight, Settings, LogOut, Menu, X
+  ChevronRight, Settings, LogOut, Menu, X, ClipboardList
 } from "lucide-react";
 
 const nav = [
@@ -13,6 +13,7 @@ const nav = [
   { label: "Job Orders", icon: Briefcase, href: "/jobs" },
   { label: "Consultant Board", icon: CalendarCheck, href: "/consultants" },
   { label: "Timesheets", icon: Clock, href: "/timesheets" },
+  { label: "Client Intake", icon: ClipboardList, href: "/intake" },
 ];
 
 export default function Sidebar() {
