@@ -251,52 +251,82 @@ UNION ALL SELECT '00000000-0000-0000-0000-000000000001'::uuid, id, 'Quality Cont
 UNION ALL SELECT '00000000-0000-0000-0000-000000000001'::uuid, id, 'Inventory Control Analyst','General Labour','Mississauga, ON',1,1,21,24,'Filled',ARRAY['Inventory systems','Excel','Background check'],'Cycle counts, discrepancy resolution.',CURRENT_DATE+20,NOW()-INTERVAL '16 days' FROM staffflow.clients WHERE agency_id='00000000-0000-0000-0000-000000000001'::uuid AND company_name='Maple Warehousing'
 UNION ALL SELECT '00000000-0000-0000-0000-000000000001'::uuid, id, 'Industrial Cleaner','General Labour','Scarborough, ON',3,3,17,19,'Filled',ARRAY['WHMIS','Background check','Evening availability'],'Commercial cleaning for industrial facilities.',CURRENT_DATE+21,NOW()-INTERVAL '17 days' FROM staffflow.clients WHERE agency_id='00000000-0000-0000-0000-000000000001'::uuid AND company_name='BuildCore Inc.';
 
--- Placements for Placed candidates
+-- Placements for Placed candidates (CTE approach — no window functions in OFFSET)
 INSERT INTO staffflow.placements (agency_id, candidate_id, client_id, job_id, status, start_date, end_date, hourly_rate)
-SELECT 
-  '00000000-0000-0000-0000-000000000001'::uuid,
-  c.id,
+WITH placed AS (
+  SELECT id, agency_id, ROW_NUMBER() OVER (ORDER BY id) AS rn
+  FROM staffflow.candidates
+  WHERE agency_id = '00000000-0000-0000-0000-000000000001'::uuid AND status = 'Placed'
+),
+clients_n AS (
+  SELECT id, ROW_NUMBER() OVER (ORDER BY id) AS rn
+  FROM staffflow.clients
+  WHERE agency_id = '00000000-0000-0000-0000-000000000001'::uuid
+),
+jobs_n AS (
+  SELECT id, ROW_NUMBER() OVER (ORDER BY id) AS rn
+  FROM staffflow.jobs
+  WHERE agency_id = '00000000-0000-0000-0000-000000000001'::uuid
+),
+counts AS (
+  SELECT
+    (SELECT COUNT(*)::int FROM staffflow.clients WHERE agency_id = '00000000-0000-0000-0000-000000000001'::uuid) AS c_cnt,
+    (SELECT COUNT(*)::int FROM staffflow.jobs   WHERE agency_id = '00000000-0000-0000-0000-000000000001'::uuid) AS j_cnt
+)
+SELECT
+  p.agency_id,
+  p.id,
   cl.id,
   j.id,
   'Active',
-  CURRENT_DATE - (10 + ROW_NUMBER() OVER () * 3)::int,
-  CURRENT_DATE + (30 + ROW_NUMBER() OVER () * 5)::int,
-  22 + (ROW_NUMBER() OVER () % 10)
-FROM staffflow.candidates c
-CROSS JOIN LATERAL (SELECT id FROM staffflow.clients WHERE agency_id='00000000-0000-0000-0000-000000000001'::uuid ORDER BY id LIMIT 1 OFFSET (ROW_NUMBER() OVER () % 12)::int) cl
-CROSS JOIN LATERAL (SELECT id FROM staffflow.jobs WHERE agency_id='00000000-0000-0000-0000-000000000001'::uuid ORDER BY id LIMIT 1 OFFSET (ROW_NUMBER() OVER () % 20)::int) j
-WHERE c.agency_id='00000000-0000-0000-0000-000000000001'::uuid AND c.status='Placed';
+  CURRENT_DATE - (10 + p.rn * 3),
+  CURRENT_DATE + (30 + p.rn * 5),
+  22 + (p.rn % 10)
+FROM placed p
+CROSS JOIN counts co
+JOIN clients_n cl ON cl.rn = ((p.rn - 1) % co.c_cnt) + 1
+JOIN jobs_n    j  ON j.rn  = ((p.rn - 1) % co.j_cnt) + 1;
 
--- Timesheets for placements
+-- Timesheets week 1
 INSERT INTO staffflow.timesheets (agency_id, candidate_id, placement_id, client_id, week_start, week_end, regular_hours, overtime_hours, hourly_rate, status, submitted_at)
+WITH numbered AS (
+  SELECT *, ROW_NUMBER() OVER (ORDER BY id) AS rn
+  FROM staffflow.placements
+  WHERE agency_id = '00000000-0000-0000-0000-000000000001'::uuid
+)
 SELECT
-  p.agency_id, p.candidate_id, p.id, p.client_id,
+  agency_id, candidate_id, id, client_id,
   DATE_TRUNC('week', NOW() - INTERVAL '7 days')::date,
   DATE_TRUNC('week', NOW() - INTERVAL '7 days')::date + 4,
-  40 + (ROW_NUMBER() OVER () % 5),
-  CASE WHEN ROW_NUMBER() OVER () % 4 = 0 THEN 4 ELSE 0 END,
-  p.hourly_rate,
-  CASE ROW_NUMBER() OVER () % 3 WHEN 0 THEN 'Approved' WHEN 1 THEN 'Pending' ELSE 'Approved' END,
+  40 + (rn % 5),
+  CASE WHEN rn % 4 = 0 THEN 4 ELSE 0 END,
+  hourly_rate,
+  CASE rn % 3 WHEN 0 THEN 'Approved' WHEN 1 THEN 'Pending' ELSE 'Approved' END,
   NOW() - INTERVAL '2 days'
-FROM staffflow.placements p
-WHERE p.agency_id='00000000-0000-0000-0000-000000000001'::uuid;
+FROM numbered;
 
+-- Timesheets week 2
 INSERT INTO staffflow.timesheets (agency_id, candidate_id, placement_id, client_id, week_start, week_end, regular_hours, overtime_hours, hourly_rate, status, submitted_at)
+WITH numbered AS (
+  SELECT *, ROW_NUMBER() OVER (ORDER BY id) AS rn
+  FROM staffflow.placements
+  WHERE agency_id = '00000000-0000-0000-0000-000000000001'::uuid
+)
 SELECT
-  p.agency_id, p.candidate_id, p.id, p.client_id,
+  agency_id, candidate_id, id, client_id,
   DATE_TRUNC('week', NOW() - INTERVAL '14 days')::date,
   DATE_TRUNC('week', NOW() - INTERVAL '14 days')::date + 4,
-  38 + (ROW_NUMBER() OVER () % 7),
-  CASE WHEN ROW_NUMBER() OVER () % 5 = 0 THEN 6 ELSE 0 END,
-  p.hourly_rate,
+  38 + (rn % 7),
+  CASE WHEN rn % 5 = 0 THEN 6 ELSE 0 END,
+  hourly_rate,
   'Approved',
   NOW() - INTERVAL '9 days'
-FROM staffflow.placements p
-WHERE p.agency_id='00000000-0000-0000-0000-000000000001'::uuid;
+FROM numbered;
 
-SELECT 
-  (SELECT COUNT(*) FROM staffflow.clients WHERE agency_id='00000000-0000-0000-0000-000000000001'::uuid) AS clients,
-  (SELECT COUNT(*) FROM staffflow.candidates WHERE agency_id='00000000-0000-0000-0000-000000000001'::uuid) AS candidates,
-  (SELECT COUNT(*) FROM staffflow.jobs WHERE agency_id='00000000-0000-0000-0000-000000000001'::uuid) AS jobs,
-  (SELECT COUNT(*) FROM staffflow.placements WHERE agency_id='00000000-0000-0000-0000-000000000001'::uuid) AS placements,
-  (SELECT COUNT(*) FROM staffflow.timesheets WHERE agency_id='00000000-0000-0000-0000-000000000001'::uuid) AS timesheets;
+-- Final count check
+SELECT
+  (SELECT COUNT(*) FROM staffflow.clients    WHERE agency_id = '00000000-0000-0000-0000-000000000001'::uuid) AS clients,
+  (SELECT COUNT(*) FROM staffflow.candidates WHERE agency_id = '00000000-0000-0000-0000-000000000001'::uuid) AS candidates,
+  (SELECT COUNT(*) FROM staffflow.jobs       WHERE agency_id = '00000000-0000-0000-0000-000000000001'::uuid) AS jobs,
+  (SELECT COUNT(*) FROM staffflow.placements WHERE agency_id = '00000000-0000-0000-0000-000000000001'::uuid) AS placements,
+  (SELECT COUNT(*) FROM staffflow.timesheets WHERE agency_id = '00000000-0000-0000-0000-000000000001'::uuid) AS timesheets;
