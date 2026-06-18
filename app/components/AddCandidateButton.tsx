@@ -1,12 +1,11 @@
 'use client'
 import { useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
-import { getSupabase } from '../../lib/supabase'
+import { getSupabase, AGENCY_ID } from '../../lib/supabase'
 import { Plus, X } from 'lucide-react'
-
-const AGENCY_ID = '00000000-0000-0000-0000-000000000001'
+import { useRouter } from 'next/navigation'
 
 export default function AddCandidateButton() {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
@@ -40,7 +39,7 @@ export default function AddCandidateButton() {
     })
     setSaving(false)
     setOpen(false)
-    window.location.reload()
+    router.refresh()
   }
 
   const inputStyle = {

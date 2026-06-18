@@ -1,9 +1,10 @@
 'use client'
 import { useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
 import { getSupabase } from '../../lib/supabase'
+import { useRouter } from 'next/navigation'
 
 export default function TimesheetActions({ id }: { id: string }) {
+  const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
   const [rejectNote, setRejectNote] = useState('')
   const [showReject, setShowReject] = useState(false)
@@ -17,7 +18,7 @@ export default function TimesheetActions({ id }: { id: string }) {
       rejection_note: note || null,
     }).eq('id', id)
     setLoading(null)
-    window.location.reload()
+    router.refresh()
   }
 
   if (showReject) {
