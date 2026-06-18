@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+  --sand: #F5F0E8;
+  --sand-dark: #EDE5D4;
+  --espresso: #2C1A0E;
+  --espresso-mid: #4A2E1A;
+  --amber: #C4841D;
+  --amber-light: #E8A83A;
+  --amber-pale: #FDF3E3;
+  --sage: #7A8C6E;
+  --sage-light: #A8B89C;
+  --clay: #B5623E;
+  --clay-light: #D4845E;
+  --text-primary: #2C1A0E;
+  --text-secondary: #6B5744;
+  --text-muted: #9C8472;
+  --border: #DDD4C4;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--sand);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: 'Playfair Display', serif;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--sand-dark); }
+::-webkit-scrollbar-thumb { background: var(--amber); border-radius: 3px; }
+
+/* Placement heat glow — signature element */
+.placement-active {
+  position: relative;
+}
+.placement-active::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--amber), var(--clay));
+  opacity: 0.15;
+  animation: heatPulse 3s ease-in-out infinite;
+  z-index: 0;
+}
+@keyframes heatPulse {
+  0%, 100% { opacity: 0.10; }
+  50% { opacity: 0.22; }
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
