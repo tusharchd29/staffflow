@@ -16,7 +16,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           display: "flex", justifyContent: "space-between", alignItems: "center"
         }}>
           <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
-            © 2026 StaffFlow · Built by <span style={{ color: "var(--amber)", fontWeight: 500 }}>Meraki Ads</span>
+            © 2026 StaffFlow · Built by <span style={{ color: "var(--amber)", fontWeight: 500 }}>Tushar</span>
           </span>
           <span style={{ fontSize: 12, color: "var(--text-muted)" }}>Demo Environment · Data is illustrative</span>
         </footer>
