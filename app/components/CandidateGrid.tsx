@@ -37,6 +37,15 @@ export default function CandidateGrid({ candidates }: { candidates: any[] }) {
   useEffect(() => {
     const q = searchParams.get('search')
     if (q) setSearch(q)
+    const roleParam = searchParams.get('role')
+    const allRoles = searchParams.get('allRoles')
+    if (allRoles) {
+      // Match Workers sends comma-separated roles
+      setRoleFilter(allRoles.split(',')[0] || 'All')
+    } else if (roleParam && roleParam !== 'All') {
+      setRoleFilter(roleParam)
+    }
+    if (q) setSearch(q)
   }, [searchParams])
 
   const roles = ['All', ...Array.from(new Set(candidates.map(c => c.role).filter(Boolean))).sort()]

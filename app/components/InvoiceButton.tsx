@@ -4,29 +4,30 @@ interface Props {
   timesheets: any[]
   totalBillable: number
   hst: number
+  clientName?: string
 }
 
-export default function InvoiceButton({ timesheets, totalBillable, hst }: Props) {
+export default function InvoiceButton({ timesheets, totalBillable, hst, clientName }: Props) {
   const generate = () => {
     const total = totalBillable + hst
     const today = new Date().toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })
     const invoiceNum = `INV-${Date.now().toString().slice(-6)}`
+    const billTo = clientName || 'Multiple Clients — See Line Items'
 
     const rows = timesheets.map(t => {
       const reg = t.regular_hours * t.hourly_rate
       const ot = t.overtime_hours * t.hourly_rate * 1.5
       const amt = reg + ot
-      return `
-        <tr>
-          <td>${t.candidates?.full_name || '—'}</td>
-          <td>${t.candidates?.role || '—'}</td>
-          <td>${t.clients?.company_name || '—'}</td>
-          <td>${t.week_start} – ${t.week_end}</td>
-          <td style="text-align:center">${t.regular_hours}h</td>
-          <td style="text-align:center">${t.overtime_hours > 0 ? `+${t.overtime_hours}h` : '—'}</td>
-          <td style="text-align:right">$${t.hourly_rate}/hr</td>
-          <td style="text-align:right;font-weight:600">$${amt.toLocaleString(undefined,{maximumFractionDigits:0})}</td>
-        </tr>`
+      return `<tr>
+        <td>${t.candidates?.full_name || '—'}</td>
+        <td>${t.candidates?.role || '—'}</td>
+        <td>${t.clients?.company_name || '—'}</td>
+        <td>${t.week_start} – ${t.week_end}</td>
+        <td style="text-align:center">${t.regular_hours}h</td>
+        <td style="text-align:center">${t.overtime_hours > 0 ? `+${t.overtime_hours}h` : '—'}</td>
+        <td style="text-align:right">$${t.hourly_rate}/hr</td>
+        <td style="text-align:right;font-weight:600">$${amt.toLocaleString(undefined,{maximumFractionDigits:0})}</td>
+      </tr>`
     }).join('')
 
     const html = `<!DOCTYPE html>
@@ -38,7 +39,7 @@ export default function InvoiceButton({ timesheets, totalBillable, hst }: Props)
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 13px; color: #2C1A0E; background: white; padding: 48px; }
   .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 24px; border-bottom: 2px solid #2C1A0E; }
-  .brand { font-size: 28px; font-weight: 700; color: #2C1A0E; letter-spacing: -0.5px; }
+  .brand { font-size: 28px; font-weight: 700; color: #2C1A0E; }
   .brand span { color: #C4841D; }
   .tagline { font-size: 12px; color: #9C8472; margin-top: 3px; }
   .invoice-meta { text-align: right; }
@@ -55,7 +56,7 @@ export default function InvoiceButton({ timesheets, totalBillable, hst }: Props)
   tbody td { padding: 10px 12px; border-bottom: 1px solid #DDD4C4; font-size: 12px; }
   .totals { margin-left: auto; width: 280px; }
   .total-row { display: flex; justify-content: space-between; padding: 7px 0; font-size: 13px; border-bottom: 1px solid #DDD4C4; }
-  .total-row.grand { font-size: 18px; font-weight: 700; color: #C4841D; border-bottom: none; padding-top: 12px; }
+  .total-row.grand { font-size: 20px; font-weight: 700; color: #C4841D; border-bottom: none; padding-top: 12px; }
   .footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid #DDD4C4; display: flex; justify-content: space-between; font-size: 11px; color: #9C8472; }
   @media print { body { padding: 24px; } }
 </style>
@@ -72,7 +73,6 @@ export default function InvoiceButton({ timesheets, totalBillable, hst }: Props)
     <div class="meta-row">Due: Net 30</div>
   </div>
 </div>
-
 <div class="from-to">
   <div>
     <div class="section-label">From</div>
@@ -81,46 +81,34 @@ export default function InvoiceButton({ timesheets, totalBillable, hst }: Props)
   </div>
   <div>
     <div class="section-label">Bill To</div>
-    <div class="name">Client Accounts</div>
-    <div class="detail">Multiple clients — see line items below<br>GTA Region, Ontario</div>
+    <div class="name">${billTo}</div>
+    <div class="detail">GTA Region, Ontario</div>
   </div>
 </div>
-
 <table>
   <thead>
-    <tr>
-      <th>Worker</th><th>Role</th><th>Client</th><th>Week</th>
-      <th style="text-align:center">Reg Hrs</th><th style="text-align:center">OT Hrs</th>
-      <th style="text-align:right">Rate</th><th style="text-align:right">Amount</th>
-    </tr>
+    <tr><th>Worker</th><th>Role</th><th>Client</th><th>Week</th><th style="text-align:center">Reg Hrs</th><th style="text-align:center">OT Hrs</th><th style="text-align:right">Rate</th><th style="text-align:right">Amount</th></tr>
   </thead>
   <tbody>${rows}</tbody>
 </table>
-
 <div class="totals">
   <div class="total-row"><span>Subtotal</span><span>$${totalBillable.toLocaleString(undefined,{maximumFractionDigits:0})}</span></div>
   <div class="total-row"><span>HST (13%)</span><span>$${hst.toLocaleString(undefined,{maximumFractionDigits:0})}</span></div>
   <div class="total-row grand"><span>Total Due</span><span>$${total.toLocaleString(undefined,{maximumFractionDigits:0})}</span></div>
 </div>
-
 <div class="footer">
   <span>Payment due within 30 days · EFT preferred · info@labourmax.ca</span>
   <span>Generated by StaffFlow · ${today}</span>
 </div>
-</body>
-</html>`
+</body></html>`
 
     const win = window.open('', '_blank')
-    if (win) {
-      win.document.write(html)
-      win.document.close()
-      setTimeout(() => win.print(), 500)
-    }
+    if (win) { win.document.write(html); win.document.close(); setTimeout(() => win.print(), 500) }
   }
 
   return (
-    <button onClick={generate} style={{ marginTop: 6, padding: '7px 16px', fontSize: 12, fontWeight: 600, background: 'var(--amber)', color: 'white', border: 'none', borderRadius: 7, cursor: 'pointer' }}>
-      Generate Invoice
+    <button onClick={generate} style={{ marginTop: 6, padding: '8px 18px', fontSize: 12, fontWeight: 600, background: 'var(--amber)', color: 'white', border: 'none', borderRadius: 7, cursor: 'pointer' }}>
+      {clientName ? `Generate Invoice — ${clientName}` : 'Generate Invoice'}
     </button>
   )
 }
